@@ -3,88 +3,93 @@ import random
 import requests
 import time
 from datetime import datetime
-from requests.exceptions import RequestException
-
+from requests.exceptions import RequestException, Timeout
 import logging
 
+# Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all levels of logs
 
 file_handler = logging.FileHandler('/opt/Real-Update/real-upload.log')
 formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
 file_handler.setFormatter(formatter)
-
 logger.addHandler(file_handler)
 
 def download_file(url, destination, max_speed=102400, timeout=180):
     try:
-        logger.error(f"Downloading {url} to {destination}")
-        response = requests.get(url, stream=True)
+        logger.info(f"Starting download: {url} to {destination}")
+        response = requests.get(url, stream=True, timeout=timeout)
         total_size = int(response.headers.get('content-length', 0))
         downloaded_size = 0
         start_time = time.time()  # Start time of the download
-        time.sleep(1)
-        try:
-            with open(destination, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
-                        downloaded_size += len(chunk)
-                        elapsed_time = time.time() - start_time
-                        download_speed = downloaded_size / elapsed_time  # Instant download speed
-                        download_speed_MB = download_speed / (1024 * 1024)  # Convert to megabytes per second
-                        progress = (downloaded_size / total_size) * 100
-                        print(f"Downloading... {progress:.2f}% completed, Download Speed: {download_speed_MB:.2f} MB/s", end='\r')
-                        # Control download speed
-                        if download_speed > max_speed:
-                            remaining_time = (downloaded_size / max_speed) - elapsed_time
-                            if remaining_time > 0:
-                                time.sleep(remaining_time)
-                        # Check timeout
-                        if elapsed_time > timeout:
-                            raise TimeoutError("Download timed out")
-        except TimeoutError:
-            logger.error(f"Download timed out!")
-            os.remove(destination)  # Remove the partially downloaded file if the download times out
-        finally:
-            print("\nDownload completed!")
-    except RequestException as e:
-         logger.error(f"Failed to download file from {url}: {e}") # Remove the partially downloaded file if the download times out
 
+        with open(destination, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+                    downloaded_size += len(chunk)
+                    elapsed_time = time.time() - start_time
+                    download_speed = downloaded_size / elapsed_time  # Download speed in bytes per second
 
+                    # Control download speed
+                    if download_speed > max_speed:
+                        remaining_time = (downloaded_size / max_speed) - elapsed_time
+                        if remaining_time > 0:
+                            time.sleep(remaining_time)
+                    
+                    # Print progress
+                    progress = (downloaded_size / total_size) * 100
+                    download_speed_MB = download_speed / (1024 * 1024)  # Convert to megabytes per second
+                    print(f"Downloading... {progress:.2f}% completed, Download Speed: {download_speed_MB:.2f} MB/s", end='\r')
+
+                    # Check timeout
+                    if elapsed_time > timeout:
+                        raise Timeout(f"Download timed out after {timeout} seconds")
+
+        print("\nDownload completed!")
+        logger.info(f"Download completed: {url} to {destination}")
+
+    except (RequestException, Timeout) as e:
+        logger.error(f"Failed to download file from {url}: {e}")
+        if os.path.exists(destination):
+            os.remove(destination)  # Remove the partially downloaded file if an error occurs
+            logger.info(f"Partially downloaded file {destination} removed due to error")
 
 def main():
+    logger.info("Starting the download script")
     while True:
         try:
             current_time = datetime.now().time()
-            start_time = datetime.strptime("23:00:00", "%H:%M:%S").time()
-            end_time = datetime.strptime("08:00:00", "%H:%M:%S").time()
-            
-            # if current_time >= start_time or current_time <= end_time:
             file_path = "urls.txt"
+            
             with open(file_path, "r") as file:
                 urls = file.readlines()
+                
             random_url = random.choice(urls).strip()  # Randomly select one URL from the list
             file_name = random_url.split("/")[-1]
             
-            if current_time >= datetime.strptime("01:00:00", "%H:%M:%S").time() and current_time <= datetime.strptime("07:30:00", "%H:%M:%S").time():
+            if datetime.strptime("01:00:00", "%H:%M:%S").time() <= current_time <= datetime.strptime("07:30:00", "%H:%M:%S").time():
                 max_speed = 120000 * 1024  
             else:
                 max_speed = 60000 * 1024  
 
-            print(f"Downloading file from: {random_url}")
+            logger.info(f"Selected URL: {random_url} with max speed {max_speed} bytes/s")
             random_timeout = random.randint(180, 300)
             download_file(random_url, file_name, max_speed=max_speed, timeout=random_timeout)  # Max speed in bytes per second, timeout in seconds
-            try:
+
+            if os.path.exists(file_name):
                 os.remove(file_name)  # Remove the downloaded file
+                logger.info(f"File {file_name} removed after download")
                 print(f"File {file_name} removed!\n")
-            except FileNotFoundError:
-                print(f"File {file_name} not found!\n")
+            else:
+                logger.warning(f"File {file_name} not found for removal")
+
             random_sleep = random.randint(10, 120)
+            logger.info(f"Sleeping for {random_sleep} seconds")
             time.sleep(random_sleep)
+
         except Exception as e:
-            logger.error(f" {e}")
+            logger.error(f"Unexpected error: {e}", exc_info=True)
 
 if __name__ == "__main__":
     main()
-
