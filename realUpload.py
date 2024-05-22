@@ -74,9 +74,9 @@ def main():
             file_name = random_url.split("/")[-1]
             
             if datetime.strptime("01:00:00", "%H:%M:%S").time() <= current_time <= datetime.strptime("07:30:00", "%H:%M:%S").time():
-                max_speed = 120000 * 1024  
+                max_speed = 35000 * 1024  
             else:
-                max_speed = 60000 * 1024  
+                max_speed = 20000 * 1024  
 
             logger.info(f"Selected URL: {random_url} with max speed {max_speed} bytes/s")
             random_timeout = random.randint(180, 300)
