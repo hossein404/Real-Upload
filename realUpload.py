@@ -64,7 +64,12 @@ def main():
             
             with open(file_path, "r") as file:
                 urls = file.readlines()
-                
+            
+            for url in urls: # Randomly select one URL from the list
+                file_name = url.strip().split("/")[-1]
+                if os.path.exists(file_name):
+                    os.remove(file_name)  # Remove the partially downloaded file if an error occurs
+                    logger.info(f"Partially downloaded file {file_name} removed due to error")
             random_url = random.choice(urls).strip()  # Randomly select one URL from the list
             file_name = random_url.split("/")[-1]
             
