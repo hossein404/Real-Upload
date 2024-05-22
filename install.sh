@@ -27,10 +27,13 @@ fi
 REPO_URL="https://github.com/mtashani/real-upload.git"
 CLONE_DIR="/opt/Real-Update"
 
-if [ ! -d "$CLONE_DIR" ] ; then
-    echo "Cloning the repository..."
-    sudo git clone "$REPO_URL" "$CLONE_DIR"
+if [ -d "$CLONE_DIR" ] ; then
+    echo "Directory $CLONE_DIR already exists. Removing the old directory..."
+    sudo rm -rf "$CLONE_DIR"
 fi
+
+echo "Cloning the repository..."
+sudo git clone "$REPO_URL" "$CLONE_DIR"
 
 cd "$CLONE_DIR"
 
@@ -41,7 +44,14 @@ sudo pip3 install -r requirements.txt
 # Create systemd service file
 SERVICE_FILE="/etc/systemd/system/realUpload.service"
 
-echo "Creating systemd service file..."
+if [ -f "$SERVICE_FILE" ] ; then
+    echo "Service file already exists. Removing the old service file..."
+    sudo systemctl stop realUpload.service
+    sudo systemctl disable realUpload.service
+    sudo rm "$SERVICE_FILE"
+fi
+
+echo "Creating new systemd service file..."
 
 sudo bash -c "cat > $SERVICE_FILE" <<EOL
 [Unit]
