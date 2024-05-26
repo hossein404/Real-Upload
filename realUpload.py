@@ -8,7 +8,7 @@ import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all levels of logs
+logger.setLevel(logging.ERROR)  # Set to DEBUG to capture all levels of logs
 
 file_handler = logging.FileHandler('/opt/Real-Update/real-upload.log')
 formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
