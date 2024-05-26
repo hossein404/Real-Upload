@@ -73,8 +73,8 @@ def main():
             random_url = random.choice(urls).strip()  # Randomly select one URL from the list
             file_name = random_url.split("/")[-1]
             
-            if datetime.strptime("01:00:00", "%H:%M:%S").time() <= current_time <= datetime.strptime("07:30:00", "%H:%M:%S").time():
-                max_speed = 35000 * 1024  
+            if datetime.strptime("02:00:00", "%H:%M:%S").time() <= current_time <= datetime.strptime("07:30:00", "%H:%M:%S").time():
+                max_speed = 70000 * 1024  
             else:
                 max_speed = 20000 * 1024  
 
@@ -89,7 +89,7 @@ def main():
             else:
                 logger.warning(f"File {file_name} not found for removal")
 
-            random_sleep = random.randint(10, 120)
+            random_sleep = random.randint(10, 60)
             logger.info(f"Sleeping for {random_sleep} seconds")
             time.sleep(random_sleep)
 
