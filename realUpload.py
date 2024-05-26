@@ -15,6 +15,10 @@ formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(messag
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
+# Disable logging to stdout/stderr
+logging.getLogger().handlers.clear()
+logging.getLogger().addHandler(file_handler)
+
 def download_file(url, destination, max_speed=102400, timeout=180):
     try:
         logger.info(f"Starting download: {url} to {destination}")
@@ -40,13 +44,13 @@ def download_file(url, destination, max_speed=102400, timeout=180):
                     # Print progress
                     progress = (downloaded_size / total_size) * 100
                     download_speed_MB = download_speed / (1024 * 1024)  # Convert to megabytes per second
-                    print(f"Downloading... {progress:.2f}% completed, Download Speed: {download_speed_MB:.2f} MB/s", end='\r')
+                    # print(f"Downloading... {progress:.2f}% completed, Download Speed: {download_speed_MB:.2f} MB/s", end='\r')
 
                     # Check timeout
                     if elapsed_time > timeout:
                         raise Timeout(f"Download timed out after {timeout} seconds")
 
-        print("\nDownload completed!")
+        # print("\nDownload completed!")
         logger.info(f"Download completed: {url} to {destination}")
 
     except (RequestException, Timeout) as e:
@@ -85,7 +89,7 @@ def main():
             if os.path.exists(file_name):
                 os.remove(file_name)  # Remove the downloaded file
                 logger.info(f"File {file_name} removed after download")
-                print(f"File {file_name} removed!\n")
+                # print(f"File {file_name} removed!\n")
             else:
                 logger.warning(f"File {file_name} not found for removal")
 
